@@ -22,7 +22,7 @@ def data_load():
     x_test=x_test.astype(np.float32)/255
     return x_train,x_test
 #network parameters
-def encoder(inputs,
+def encoder(input_shape,
             layer_filters:List[int]=[32,64],
                     kernel_size:int=3,
                     latent_dim:int=6):
@@ -35,6 +35,7 @@ def encoder(inputs,
     Returns:
         encoder(Model): tensor model
     """
+    inputs=Input(shape=input_shape,name="encoder_input")
     x=inputs
     for filters in layer_filters:
         x=Conv2D(filters=filters,
@@ -54,7 +55,7 @@ def encoder(inputs,
                to_file="encoder.png",
                show_shapes=True)
     return encoder
-def decoder(kernel_size:int=3,
+def decoder(kernel_sizes:int=3,
             layer_filters:List[int]=[32,64],
             latent_dim:int=6):
     latent_inputs=Input(shape=(latent_dim,),
@@ -63,12 +64,12 @@ def decoder(kernel_size:int=3,
     x=Reshape((shape[1],shape[2],shape[3]))(x)
     for filters in layer_filters[::-1]:
         x=Conv2DTranspose(filters=filters,
-                          kernel_size=(kernel_size,kernel_size),
+                          kernel_size=(3,3),
                           activation=tf.keras.activations.relu,
                           strides=2,
                           padding="same")(x)
     outputs=Conv2DTranspose(filters=1,
-                            kernel_size=(kernel_size,kernel_size),
+                            kernel_size=(3,3),
                             activation=tf.keras.activations.sigmoid,
                             padding="same",
                             name="decoder_output")(x)
@@ -77,11 +78,14 @@ def decoder(kernel_size:int=3,
     plot_model(decoder,to_file="decoder.png",show_shapes=True)
     return decoder
 def autoencoder(input_shape=(image_size,image_size,1)):
-    inputs=Input(shape=input_shape,name="encoder_input")
-    a=encoder(inputs)
-    coder=Model(inputs,decoder(a),name="autoencoder")
-    plot_model(coder,to_file="autoencoder.png",show_shapes=True)
+    model1=encoder(input_shape)
+    model2=decoder()
+    outputs=model2(model1.output)
+    coder=Model(inputs=model1.input,
+                outputs=outputs)
+    plot_model(coder,to_file="coder.png",show_shapes=True)
     return coder
+    
 if __name__ == "__main__":
     autoencoder()
     
