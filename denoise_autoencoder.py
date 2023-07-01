@@ -120,15 +120,30 @@ def train(model,
     return model
 def evaluate(model_path:str,
              x_test:np.array,
-             x_test_noisy:np.array):
+             x_test_noisy:np.array,image_size:int=28):
     model=tf.keras.models.load_model(model_path)
-    
+    x_decoder=model.predict(x_test_noisy)
+    fig_draw(np.expand_dims(x_test,-1),np.expand_dims(x_test_noisy,-1),x_decoder,image_size)
+def fig_draw(x_test,x_test_noisy,x_decoder,image_size):
+    rows,cols=3,9
+    num=rows*cols
+    imgs=np.concatenate([x_test[:num],x_test_noisy[:num],x_decoder[:num]])
+    imgs=imgs.reshape((rows*3,cols,image_size,image_size))
+    imgs=np.vstack(np.split(imgs,rows,axis=1))
+    imgs=imgs.reshape((rows*3,-1,image_size,image_size))
+    imgs=np.vstack([np.hstack(i) for i in imgs])
+    imgs=(imgs*255).astype(np.uint8)
+    plt.figure()
+    plt.axis("off")
+    plt.imshow(imgs,interpolation="none",cmap="gray")
+    plt.show()
 if __name__=="__main__":
     (x_train,x_train_noisy),(x_test,x_test_noisy),image_size=data_load()
     input_shape=(image_size,image_size,1)
     #train model
     #model=autoencoder(input_shape)
     #train(model,x_train,x_train_noisy,x_test,x_test_noisy)
-    
+    evaluate(r"model_saves/noisy_autoencoder.h5",
+             x_test,x_test_noisy,image_size)
     
     
