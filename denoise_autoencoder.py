@@ -119,8 +119,8 @@ def train(model,
     print("model train successfully")
     return model
 def evaluate(model_path:str,
-             x_test:np.array,
-             x_test_noisy:np.array,image_size:int=28):
+             x_test:np.ndarray,
+             x_test_noisy:np.ndarray,image_size:int=28):
     model=tf.keras.models.load_model(model_path)
     x_decoder=model.predict(x_test_noisy)
     fig_draw(np.expand_dims(x_test,-1),np.expand_dims(x_test_noisy,-1),x_decoder,image_size)
