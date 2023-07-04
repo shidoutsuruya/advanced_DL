@@ -42,10 +42,8 @@ def build_generator(input_shape:Tuple[int,...],image_size:int):
     return generator
 def build_discriminator(input_shape:Tuple[int,...]):
     """discriminator
-
     Args:
-        input_shape (Tuple[int,...]): input layer of the discriminator
-
+        input_shape (Tuple[int,...]): as the general cnn classifier
     Returns:
         Model: discriminator model
     """
@@ -69,8 +67,16 @@ def build_discriminator(input_shape:Tuple[int,...]):
     return discriminator
 
 def build_and_train_models(image_size:int,latent_size:int=100):
-    """ build adversarial model from the generator and distriminator
+    """build the adversarial model which is based on the generator and discriminator
+
+    Args:
+        image_size (int): mnist image size Default:28
+        latent_size (int, optional): initial one dimension vector shape. Defaults to 100.
+
+    Returns:
+        (Model,Model,Model): generator,discriminator,adversarial model
     """
+    #network parameters
     lr=2e-4
     decay=6e-8
     input_shape=(image_size,image_size,1)
@@ -102,9 +108,17 @@ def build_and_train_models(image_size:int,latent_size:int=100):
 def train(models,
           save_interval=100,
           latent_size:int=100,
-          img_num:int=16):
-    """_train the Discriminator and Adversarial Networks
+          batch_size:int=64,
+          ):
+    """_summary_
+
+    Args:
+        models (Model,Model,Model): generator,discriminator,adversarial model
+        save_interval (int, optional): after every interval save imgs. Defaults to 100.
+        latent_size (int, optional): initial one dimension vector shape. Defaults to 100.
+        batch_size (int, optional): training batch size. Defaults to 64.
     """
+    
     #data preparation
     (x_train,_),(_,_) = mnist.load_data()
     image_size=x_train.shape[1]
@@ -115,11 +129,8 @@ def train(models,
     img_dir="gan_images"
     #load model
     generator,discriminator,adversarial=models
-    #noise vector
-    noise_input=np.random.uniform(-1.0,1.0,size=[img_num,latent_size])
     #number of elements in train dataset
     train_size=x_train.shape[0]
-    batch_size=64
     for i in range(train_steps):
         #random sampling
         rand_indexes=np.random.randint(0,train_size,size=batch_size)
@@ -141,35 +152,43 @@ def train(models,
         loss,acc=adversarial.train_on_batch(noise,y)
         log=f"{log}[adversarial loss:{loss:.3f},acc:{acc:.3f}]"
         print(log)
+        #plot image and save model
         if (i+1)%save_interval==0:
-            plot_images(generator,
-                        noise_input=noise_input,
+            plot_images(model=generator,
+                        latent_size=latent_size,
+                        img_num=16,
+                        show_shape=(4,4),
                         img_dir=img_dir,
                         show=False,
                         step=(i+1))
             generator.save(os.path.join("model_saves","GAN_generator.h5"))
-def plot_images(generator,
-                noise_input,
-                img_dir,
+def plot_images(model:Model,
+                latent_size:int,
+                img_num:int,
+                show_shape:tuple,
+                img_dir:str,
                 show=False,
                 step=0,
                 ):
-    """generate fake images
-
+    """plot the images
     Args:
-        generator (_type_): _description_
-        noise_input (_type_): _description_
-        show (bool, optional): _description_. Defaults to False.
-        step (int, optional): _description_. Defaults to 0.
-        model_name (str, optional): _description_. Defaults to "gan".
-    """
+        model (Model): load generator model
+        latent_size (int): latent size
+        img_num (int): show image num 16
+        show_shape (tuple): to shape 16->(4,4) or (2,8)
+        img_dir (str): save image dir
+        show (bool, optional): whether plt.show. Defaults to False.
+        step (int, optional): training save step. Defaults to 0.
+    """    
     os.makedirs(img_dir,exist_ok=True)
     file_name=os.path.join(img_dir,f"mnist_{step}.png")
-    predict_images=generator.predict(noise_input)
-    predict_images=predict_images.reshape(4,4,28,28,1)
+    noise_input=np.random.uniform(-1.0,1.0,size=[img_num,latent_size])
+    predict_images=model.predict(noise_input)
+    predict_images=predict_images.reshape(*show_shape,28,28,1)
     imgs=np.vstack([np.hstack(i) for i in predict_images])
     plt.figure()
     plt.imshow(imgs,interpolation='none',cmap='gray')
+    plt.axis('off')
     plt.savefig(file_name)
     if show:
         plt.show()
