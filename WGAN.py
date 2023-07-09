@@ -3,7 +3,7 @@ from tensorflow.keras.models import Model,load_model
 from tensorflow.keras.datasets import mnist
 from tensorflow.keras import backend as K
 import tensorflow as tf
-from GAN import build_generator,build_discriminator,plot_images
+from classical_GAN import build_generator,build_discriminator,plot_images
 import numpy as np
 import sys
 

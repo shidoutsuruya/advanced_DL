@@ -172,12 +172,12 @@ def train(train_steps:int=40000,
                         step=(i+1))
         generator.save(os.path.join("model_saves",model_name))
 def plot_images(model:Model,
+                img_dir: str,
                 num_labels:int,
                 step:int=0,
                 img_num:int=16,
                 show_shape:tuple=(4,4),
-                latent_size:int=100,
-                img_dir:str="cgan_image",
+                latent_size:int=100, 
                 show:bool=False,
                 ):
     """draw images
